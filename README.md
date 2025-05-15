@@ -19,7 +19,7 @@ A FastAPI application that extracts text from complex documents (PDF, DOCX, XLSX
 ## Installation
 
 1. Clone the repository
-   git clone https://github.com/your-username/document-extractor.git
+   git clone https://https://github.com/Precious-Neche/DocExtractor.git
    cd document-extractor
    
 3. Install dependencies
