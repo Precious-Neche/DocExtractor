@@ -1,5 +1,6 @@
 import os
-import magic
+import tempfile
+import uuid
 from fastapi import FastAPI, Request, UploadFile, Form, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -27,38 +28,58 @@ async def extract_data(
     file: UploadFile,
     password: Optional[str] = Form(None),
 ):
+    temp_file_path = None
     try:
-        # Save the uploaded file temporarily
-        file_path = f"temp_{file.filename}"
-        with open(file_path, "wb") as buffer:
+        # Create secure temporary file with UUID
+        file_ext = os.path.splitext(file.filename)[1].lower()
+        temp_file_name = f"doc_{uuid.uuid4()}{file_ext}"
+        temp_file_path = os.path.join(tempfile.gettempdir(), temp_file_name)
+        
+        # Write the uploaded file
+        with open(temp_file_path, "wb") as buffer:
             buffer.write(await file.read())
         
-        # Determine file type
-        mime = magic.Magic(mime=True)
-        file_type = mime.from_file(file_path)
-        
-        # Process the file based on its type
-        if "image" in file_type:
-            # THIS IS THE CRITICAL FIX - use the result directly
-            result = extract_text_from_image(file_path)
+        # Process based on file type
+        if file_ext in ('.png', '.jpg', '.jpeg'):
+            result = extract_text_from_image(temp_file_path)
         else:
-            result = parse_document(file_path, password)
-        
-        # Clean up
-        os.remove(file_path)
+            result = parse_document(temp_file_path, password)
         
         return templates.TemplateResponse(
             "results.html",
             {
                 "request": request,
                 "filename": file.filename,
-                "content": result.content,  # Already a string
-                "metadata": result.metadata  # Already a dict
+                "content": result.content,
+                "metadata": result.metadata
             }
         )
     
+    except ValueError as e:
+        # Specific handling for password-related errors
+        error_detail = str(e)
+        if "password" in error_detail.lower():
+            error_detail = f"Document password error: {error_detail}"
+        raise HTTPException(
+            status_code=400,
+            detail=error_detail
+        )
+    
     except Exception as e:
-        # Clean up temp file if it exists
-        if os.path.exists(file_path):
-            os.remove(file_path)
-        raise HTTPException(status_code=400, detail=str(e))
+        # Generic error handling
+        raise HTTPException(
+            status_code=500,
+            detail=f"Document processing failed: {str(e)}"
+        )
+    
+    finally:
+        # Ensure temp file is always cleaned up
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.remove(temp_file_path)
+            except:
+                pass  # Silent cleanup if file is already gone
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "version": "1.0.0"}
