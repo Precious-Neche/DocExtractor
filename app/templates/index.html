@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">Document Data Extractor</h2>
+            </div>
+            <div class="card-body">
+                <p class="lead">Upload complex or password-protected documents to extract text and data.</p>
+                
+                <form action="/extract" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Select Document</label>
+                        <input class="form-control" type="file" id="file" name="file" required>
+                        <div class="form-text">Supported formats: PDF, DOCX, XLSX, and images (PNG, JPG)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password (if needed)</label>
+                        <input type="password" class="form-control" id="password" name="password">
+                        <div class="form-text">Only needed for password-protected PDFs</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Extract Data</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

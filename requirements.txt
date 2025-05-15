@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+python-multipart
+pillow
+pytesseract
+pdf2image
+pypdf2
+python-docx
+openpyxl
+jinja2
+python-magic
+qrcode
